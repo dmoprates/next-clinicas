@@ -1,6 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import router from "next/router";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -8,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, { message: "O nome deve ter pelo menos 2 caracteres" }).max(50),
@@ -15,9 +18,16 @@ const registerSchema = z.object({
   password: z.string().trim().min(8, {message: "Senha deve ter pelo menos 8 caracteres" }),
 })
   
-function onSubmit(data: z.infer<typeof registerSchema>) {
-    // Do something with the form values.
-    console.log(data)
+async function onSubmit(values: z.infer<typeof registerSchema>) {
+    await authClient.signUp.email({
+      email: values.email,
+      password: values.password,
+      name: values.name,
+    }, {
+      onSuccess: () => {
+        router.push("/dashboard")
+      }
+    })
 }
 
 const SignUpForm = () => {
@@ -113,7 +123,13 @@ const SignUpForm = () => {
                 </CardContent>
               
                 <CardFooter>
-                  <Button type="submit" className="w-full">Criar conta</Button>
+                  <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      "Criar conta"
+                    )}
+                  </Button>
                 </CardFooter>
               </FieldGroup>
             </form>
