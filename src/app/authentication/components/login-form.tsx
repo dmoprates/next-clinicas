@@ -9,21 +9,21 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-const registerSchema = z.object({
+const loginSchema = z.object({
   name: z.string().trim().min(2, { message: "O nome deve ter pelo menos 2 caracteres" }).max(50),
   email: z.string().trim().min(1, {message: "E-mail é obrigatório"}).email({ message: "O email deve ser valido" }),
   password: z.string().trim().min(8, {message: "Senha deve ter pelo menos 8 caracteres" }),
 })
   
-function onSubmit(data: z.infer<typeof registerSchema>) {
+function onSubmit(data: z.infer<typeof loginSchema>) {
     // Do something with the form values.
     console.log(data)
 }
 
-const SignUpForm = () => {
+const LoginForm = () => {
 
-    const form = useForm <z.infer<typeof registerSchema>>({
-        resolver: zodResolver(registerSchema),
+    const form = useForm <z.infer<typeof loginSchema>>({
+        resolver: zodResolver(loginSchema),
         defaultValues: {
         name: "",
         email: "",
@@ -36,35 +36,13 @@ const SignUpForm = () => {
             <form id="form-rhf-input" onSubmit={form.handleSubmit(onSubmit)}>
               <FieldGroup>
                 <CardHeader>
-                  <CardTitle>Criar Conta</CardTitle>
+                  <CardTitle>Login</CardTitle>
                     <CardDescription>
-                      Crie uma conta para continuar
+                      Faca login para continuar
                   </CardDescription>
                 </CardHeader>
                 
                <CardContent className="space-y-4"  >
-                  <Controller
-                    name="name"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="form-rhf-input-username">
-                        Nome
-                      </FieldLabel>
-                      <Input
-                        {...field}
-                        id="form-rhf-input-username"
-                        aria-invalid={fieldState.invalid}
-                        placeholder="Digite seu nome"
-                        autoComplete="name"
-                      />                  
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
-                    )}
-                  />
-
                   <Controller
                     name="email"
                     control={form.control}
@@ -121,4 +99,4 @@ const SignUpForm = () => {
      );
 }
  
-export default SignUpForm;
+export default LoginForm;
