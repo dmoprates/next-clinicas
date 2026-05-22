@@ -9,10 +9,10 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { doctorsTable } from "@/db/schema";
+import { formatCurrencyInCents } from "@/helpers/currency";
 
 import { getAvailability } from "../_helpers/availability";
 import UpsertDoctorForm from "./upsert-doctor-form";
-import { formatCurrencyInCents } from "@/helpers/currency";
 
 interface DoctorCardProps {
     doctor: typeof doctorsTable.$inferSelect
