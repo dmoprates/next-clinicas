@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -98,8 +97,8 @@ const UpsertDoctorForm = ({
     return ( 
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Adicionar Médico</DialogTitle>
-            <DialogDescription>Adicione um novo médico</DialogDescription>
+            <DialogTitle>{doctor ? doctor.name : "Adicionar médico"}</DialogTitle>
+            <DialogDescription>{doctor ? "Edite as informações do médico" : "Adicionar um novo médico"}</DialogDescription>
           </DialogHeader>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <Controller
@@ -377,11 +376,12 @@ const UpsertDoctorForm = ({
 
                 <DialogFooter>
                   <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        "Adicionar médico(a)"
-                    )}
+                    {upsertDoctorAction.isPending
+                        ? "Salvando..."
+                        : doctor
+                        ? "Salvar"
+                        : "Adicionar"
+                    }
                   </Button>
                 </DialogFooter>
             </form>
