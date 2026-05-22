@@ -1,21 +1,26 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { useAction } from "next-safe-action/hooks";
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { NumericFormat } from 'react-number-format';
+import { toast } from "sonner";
 import { z } from "zod";
 
+import { upsertDoctor } from "@/actions/upsert-doctor";
 import { Button } from "@/components/ui/button";
 import { DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { doctorsTable } from "@/db/schema";
 
 import { medicalSpecialties } from "../_constants";
 
 const formSchema = z.object({
     name: z.string().trim().min(1, {message: "Nome é obrigatório"}),
-    speciality: z.string().trim().min(1, {message: "Especialidade é obrigatório"}),
-    appointmentsPrice: z.number().min(1, {message: "Valor da consulta é obrigatório"}),
+    specialty: z.string().trim().min(1, {message: "Especialidade é obrigatório"}),
+    appointmentPrice: z.number().min(1, {message: "Valor da consulta é obrigatório"}),
     availableFromWeekday: z.string(),
     availableToWeekday: z.string(),
     availableFromTime: z.string().min(1, {message: "Hora inicial é obrigatório"}),
@@ -27,24 +32,68 @@ const formSchema = z.object({
     path: ["availableToTime"],
 });
 
-const UpsertDoctorForm = () => {
+interface UpsertDoctorFormProps {
+  isOpen: boolean;
+  doctor?: typeof doctorsTable.$inferSelect;
+  onSuccess?: () => void;
+}
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            name: "",
-            speciality: "",
-            appointmentsPrice: 0,
-            availableFromWeekday: "1",
-            availableToWeekday: "5",
-            availableFromTime: "",
-            availableToTime: "",
-        },
+const UpsertDoctorForm = ({
+  doctor,
+  onSuccess,
+  isOpen,
+}: UpsertDoctorFormProps) => {
+  const form = useForm<z.infer<typeof formSchema>>({
+    shouldUnregister: true,
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: doctor?.name ?? "",
+      specialty: doctor?.specialty ?? "",
+      appointmentPrice: doctor?.appointmentPriceInCents
+        ? doctor.appointmentPriceInCents / 100
+        : 0,
+      availableFromWeekday: doctor?.availableFromWeekDay?.toString() ?? "1",
+      availableToWeekday: doctor?.availableToWeekDay?.toString() ?? "5",
+      availableFromTime: doctor?.availableFromTime ?? "",
+      availableToTime: doctor?.availableToTime ?? "",
+    },
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        name: doctor?.name ?? "",
+        specialty: doctor?.specialty ?? "",
+        appointmentPrice: doctor?.appointmentPriceInCents
+          ? doctor.appointmentPriceInCents / 100
+          : 0,
+        availableFromWeekday: doctor?.availableFromWeekDay?.toString() ?? "1",
+        availableToWeekday: doctor?.availableToWeekDay?.toString() ?? "5",
+        availableFromTime: doctor?.availableFromTime ?? "",
+        availableToTime: doctor?.availableToTime ?? "",
+      });
+    }
+  }, [isOpen, form, doctor]);
+
+  const upsertDoctorAction = useAction(upsertDoctor, {
+    onSuccess: () => {
+      toast.success("Médico adicionado com sucesso.");
+      onSuccess?.();
+    },
+    onError: () => {
+      toast.error("Erro ao adicionar médico.");
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    upsertDoctorAction.execute({
+      ...values,
+      id: doctor?.id,
+      availableFromWeekDay: parseInt(values.availableFromWeekday),
+      availableToWeekDay: parseInt(values.availableToWeekday),
+      appointmentPriceInCents: values.appointmentPrice * 100,
     });
-
-        const onSubmit = (values: z.infer<typeof formSchema>) => {
-            console.log(values);
-        }
+  };
 
     return ( 
         <DialogContent>
@@ -76,15 +125,15 @@ const UpsertDoctorForm = () => {
                   />
 
                 <Controller
-                    name="speciality"
+                    name="specialty"
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid} className="w-full">
-                        <FieldLabel htmlFor="form-rhf-select-speciality">
+                        <FieldLabel htmlFor="form-rhf-select-specialty">
                           Especialidade
                         </FieldLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger id="form-rhf-select-speciality" aria-invalid={fieldState.invalid}>
+                          <SelectTrigger id="form-rhf-select-specialty" aria-invalid={fieldState.invalid}>
                             <SelectValue placeholder="Selecione a especialidade" />
                           </SelectTrigger>
                           <SelectContent>
@@ -104,7 +153,7 @@ const UpsertDoctorForm = () => {
                 />
 
                 <Controller
-                    name="appointmentsPrice"
+                    name="appointmentPrice"
                     control={form.control}
                     render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -112,11 +161,10 @@ const UpsertDoctorForm = () => {
                         Preço da Consulta
                       </FieldLabel>
                       <NumericFormat
-                        {...field}
-                        id="form-rhf-input-appointments-price"
-                        aria-invalid={fieldState.invalid}
                         value={field.value}
-                        onValueChange={(values) => field.onChange(values.floatValue)}
+                        onValueChange={(value) => {
+                          field.onChange(value.floatValue);
+                        }}
                         decimalScale={2}
                         fixedDecimalScale
                         decimalSeparator=","
@@ -124,8 +172,8 @@ const UpsertDoctorForm = () => {
                         allowLeadingZeros={false}
                         thousandSeparator="."
                         customInput={Input}
-                        prefix="R$ "
-                      />                  
+                        prefix="R$"
+                      />                 
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
                       )}
