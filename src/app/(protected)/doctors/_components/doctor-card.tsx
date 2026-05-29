@@ -61,10 +61,7 @@ const DoctorCard = ({ doctor }: DoctorCardProps) => {
             </CardContent>
             <Separator />
             <CardFooter className="flex-col flex gap-1">
-                 <Dialog
-                    open={isUpsertDoctorDialogOpen}
-                    onOpenChange={setIsUpsertDoctorDialogOpen}
-                    >
+                 <Dialog open={isUpsertDoctorDialogOpen} onOpenChange={setIsUpsertDoctorDialogOpen}>
                     <DialogTrigger asChild>
                         <Button className="w-full">Ver detalhes</Button>
                     </DialogTrigger>
@@ -80,7 +77,7 @@ const DoctorCard = ({ doctor }: DoctorCardProps) => {
                 </Dialog>
                  {doctor && (
                   <AlertDialog>
-                    <AlertDialogTrigger>
+                    <AlertDialogTrigger asChild>
                       <Button className="w-full" variant="destructive">Excluir</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
